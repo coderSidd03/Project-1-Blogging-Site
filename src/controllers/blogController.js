@@ -1,16 +1,15 @@
 const BlogModel = require("../models/blogModel");
 const AuthorModel = require('../models/authorModel');
-// const = require('../controllers/);
+const Validator = require('../validation/validator')
+const moment = require("moment");
+
+// declaring the ObjectId types of mongoose 
 const ObjectId = require('mongoose').Types.ObjectId
 
 
 // Defined Some Globally used functions
-
 const checkInputs = (value) => { return (Object.keys(value).length > 0); }
-
-
 const isValidInput = (value) => { return ((typeof (value) === 'string' && value.length > 0)); }
-
 
 
 //**     /////////////////////////      Createblog      //////////////////////       **//
@@ -63,21 +62,29 @@ const getBlogs = async (req, res) => {
 
         // taking all queries from query param and destructuring
         let queries = req.query
-        let { tags, category, subcategory, authorId, ...rest } = req.query;
+        let { tags, category, subcategory, authorId, ...rest } = {...queries};
 
         //checking if any other attributes (keys) in req query is present or not (which we don't required)
-        if (checkInputs(rest)) return res.status(404).send({ status: false, msg: "please provide query between valid credentials only => tags, category, subcategory, authorId" });
+        if (Validator.checkInputsPresent(rest)) return res.status(404).send({ status: false, msg: "please provide query between valid credentials only => tags, category, subcategory, authorId" });
 
         // checking that if authorId present , provided authorId's format is a hex value (common format for all ids in mongo DB)
-        if (authorId && (!ObjectId.isValid(authorId))) return res.status(404).send({ status: false, msg: "provided authorId is invalid" });
+        if (authorId && (!Validator.validateId(authorId))) return res.status(404).send({ status: false, msg: "provided authorId is invalid" });
 
         // passing the queries variable inside find, desired filterisation too for validation
         let allBlogs = await BlogModel.find({
             $and: [queries, { isDeleted: false, isPublished: true }]
         });
+
+        // handling this error if no data found (find returns array of objects) => 
+        // way-1
+        // if (!allBlogs[0]) return res.status(404).send({ status: false, msg: "No blog found" });
+        // way-2
         if (allBlogs.length == 0) return res.status(404).send({ status: false, msg: "No blog found" });
+        
+
 
         // sending response
+        // if we put query then also getting choices
         res.status(200).send(
             {
                 status: true,
@@ -98,39 +105,41 @@ const updateBlog = async (req, res) => {
         // taking the userId who is requesting this route
         let requestingAuthor = req.requestingAuthor
         // taking the blog from authorise middleware
-        let searchedBlog = req.foundBlog
-        // extracting authorId from blog
-        let authorIdFromBlog = searchedBlog['authorId'].toString();
-
-        // getting blog from middleware(authorisation) in searchedBlog variable
-        if (!searchedBlog) return res.status(404).send({ status: false, msg: "invalid blogId" });
-        // checking that both author are same
-        if (requestingAuthor != authorIdFromBlog) return res.status(404).send({ status: false, msg: "author has no permission to change other's blog" });
-
-
-        // taking details from the body
-        let details = req.body;
-        // destructuring 
-        let { title, body, category, isPublished, tags, subcategory, ...rest } = req.body
-
-        //checking if any other attributes (keys) in req body is present or not (which we don't required to save)
-        if (checkInputs(rest)) return res.status(400).send({ status: false, msg: "please request with acceptable fields only => title, body, category, isPublished, tags, subcategory to update your document" })
-
 
         // taking blogId (provided in params) from middleware/authorisation 
         let blogIdFromParams = req.blogIdFromParams;
         // checking the blogId(path params) format is in hex value
-        if (!ObjectId.isValid(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
+        // if (!ObjectId.isValid(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
+
+        let searchedBlog = req.foundBlog
+
+        // getting blog from middleware(authorisation) in searchedBlog variable
+        if (!searchedBlog) return res.status(404).send({ status: false, msg: "invalid blogId" });
+
+        // extracting authorId from blog
+        let authorIdFromBlog = searchedBlog['authorId'].toString();
+
+        // checking that both author are same
+        if (requestingAuthor != authorIdFromBlog) return res.status(404).send({ status: false, msg: "author has no permission to change other's blog" });
+
+        // taking details from the body
+        let detailsFromBody = req.body;
+        // destructuring 
+        let { title, body, category, isPublished, tags, subcategory, ...rest } = {...detailsFromBody}
+
+        //checking if any other attributes (keys) in req body is present or not (which we don't required to save)
+        if (Validator.checkInputsPresent(rest)) return res.status(400).send({ status: false, msg: "please request with acceptable fields only => title, body, category, isPublished, tags, subcategory to update your document" })
 
         let checkBlog = await BlogModel.findById(blogIdFromParams)
         if (checkBlog['isDeleted'] == true) return res.status(404).send({ status: false, msg: "requested document has already deleted" });
 
+        let currentDate = moment().format("DD MM YYYY hh:mm:ss a")
         // updating that blog with findOneAndUpdate
         const updatedBlog = await BlogModel.findOneAndUpdate(
             { _id: blogIdFromParams },
             {
-                $push: { tags: details.tags, subcategory: details.subcategory, category: details.category },
-                $set: { title: details.title, body: details.body, isPublished: true, publishedAt: new Date() }
+                $push: { tags: tags, subcategory: subcategory, category: category },
+                $set: { title: title, body: body, isPublished: true, publishedAt: currentDate }
             },
             { new: true }
         );
@@ -146,7 +155,7 @@ const deleteBlogById = async (req, res) => {
         // blogId from middlewares/authorise
         let blogIdFromParams = req.blogIdFromParams;
         // checking the blogId(path params) format is in hex value
-        if (!ObjectId.isValid(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
+        if (!Validator.validateId(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
 
         // authorId who is requesting route (from params)
         let requestingAuthorId = req.requestingAuthor
@@ -211,7 +220,7 @@ const deleteBlogByQueryParam = async (req, res) => {
         // deleting documents according to the query param inputs
         // according to those data there will may be a scenario where we have to update many docs
         // thats'why we are using updateMany
-        
+
         let deletedBlogDetails = await BlogModel.updateMany(
             // using $and to target those docs matching with queries taken and those are not deleted
             { $and: [queries, { isDeleted: false }] },

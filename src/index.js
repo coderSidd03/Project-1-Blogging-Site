@@ -8,7 +8,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-mongoose.connect("mongodb+srv://Project-1:6H3EsS0qOKLtWR0B@cluster0.hln3nud.mongodb.net/Lucky?retryWrites=true&w=majority",
+mongoose.connect("mongodb+srv://Project-1:6H3EsS0qOKLtWR0B@cluster0.hln3nud.mongodb.net/Project-1?retryWrites=true&w=majority",
     {
         useNewUrlParser: true
     })
@@ -18,10 +18,14 @@ mongoose.connect("mongodb+srv://Project-1:6H3EsS0qOKLtWR0B@cluster0.hln3nud.mong
 
 app.use('/', route);
 
-app.use((req, res, next) => {
-    const error = new Error('/ Given Path Is Unidentified /');
-    return res.status(404).send({status: 'ERROR', error: error.message})
-});
+// error handling => wrong path in path params 
+// if a given path is not matching any of our routes
+// it will return this error  
+//* way-1 ,  //** way-2 in route.js ln: 28
+// app.use((req, res, next) => {
+//     const error = new Error('/ Given Path Is Unidentified /');
+//     return res.status(404).send({status: 'ERROR', error: error.message})
+// });
 
 
 app.listen(process.env.PORT || 3000, () => {

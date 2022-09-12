@@ -25,5 +25,15 @@ router.delete('/blogs/:authorId/:blogId', MW.authenticateAuthor, MW.authoriseAut
 router.delete('/blogs/:authorId', MW.authenticateAuthor, MW.authoriseAuthor, BlogController.deleteBlogByQueryParam);
 
 
+// error handling => wrong path in path params
+// if a given path is not matching any of our routes
+// it will return this error  
+//* way-2 ,  //** way-1 in route.js ln: 21
+router.all("/*", (req, res) => {
+    res.status(404).send({
+        status: false, message: "/ Given Path Is Unidentified /"
+    });
+});
+
 
 module.exports = router;

@@ -1,6 +1,8 @@
 const JWT = require('jsonwebtoken')
 const AuthorModel = require('../models/authorModel')
 const BlogModel = require('../models/blogModel')
+const Validator = require('../validation/validator')
+
 const ObjectId = require('mongoose').Types.ObjectId
 
 
@@ -15,13 +17,13 @@ const authenticateAuthor = async (req, res, next) => {
         // else verifying that token
         // verify takes two parameter
         // jwt.verify(<token from header>, "secret <used to create that token>")
-        let validateToken = JWT.verify(token, "-- plutonium-- project-blogging-site -- secret-token --")    // hv to chk callback to find evry part of token's error
+        let decodedToken = JWT.verify(token, "-- plutonium-- project-blogging-site -- secret-token --")    // hv to chk callback to find evry part of token's error
 
         // checking if not decodedToken .i.e. given token is not a valid token
-        if (!validateToken) return res.status(404).send({ status: false, msg: "invalid token" })
+        if (!decodedToken) return res.status(404).send({ status: false, msg: "invalid token" })
 
-        // setting validateToken in the response headers and passing the value of this function's data stored in decodedToken
-        req.validateToken = validateToken
+        // setting decodedToken in the response headers and passing the value of this function's data stored in decodedToken
+        req.decodedToken = decodedToken
 
         next()
     } catch (err) {
@@ -34,12 +36,12 @@ const authoriseAuthor = async (req, res, next) => {
 
     try {
 
-        // extracting the userId from the validateToken's sent data( req.validateToken.AuthorId )
-        let loggedInAuthor = req.validateToken.userId
+        // extracting the userId from the decodedToken's sent data( req.decodedToken.AuthorId )
+        let loggedInAuthor = req.decodedToken.userId
 
         // taking the author from path params (who is requesting route)
         let requestingAuthor = req.params.authorId
-        if (!ObjectId.isValid(requestingAuthor)) return res.status(404).send({ status: false, msg: 'invalid authorId provided in path params' })
+        if (!Validator.validateId(requestingAuthor)) return res.status(404).send({ status: false, msg: 'invalid authorId provided in path params' })
 
         // checking with two id's that author who is requesting route and whose data in token are the same
         if (loggedInAuthor != requestingAuthor) return res.status(404).send({ status: false, msg: 'user is not authorised' })

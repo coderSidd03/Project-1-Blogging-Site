@@ -8,7 +8,6 @@ const AuthorModel = require("../models/authorModel")
 
 const checkInputs = (value) => { return (Object.keys(value).length > 0); }
 
-
 const isValidInput = (value) => { return ((typeof (value) === 'string' && value.length > 0)); }
 
 
@@ -16,11 +15,6 @@ const isValidInput = (value) => { return ((typeof (value) === 'string' && value.
 
 const createAuthor = async (req, res) => {
     try {
-
-        let author = req.body
-        // destructuring the object we found from body
-        let { fname, lname, title, email, password, ...rest } = req.body
-
         // checking anything inputted or not
         // as empty object gives truthy value , so we declarin if there is no keys return nothing found
         if (!checkInputs(author)) return res.status(404).send({ status: false, msg: "nothing found from body" });
@@ -51,8 +45,7 @@ const createAuthor = async (req, res) => {
 
 
         // creating new author
-        let authorCreated = await AuthorModel.create(author);
-
+        let authorCreated = await AuthorModel.create(req.body);
         res.status(201).send({ status: true, data: authorCreated });
     } catch (err) {
         res.status(500).send({ status: "error", error: err.message });
@@ -88,12 +81,14 @@ const login = async (req, res) => {
         let Author = await AuthorModel.findOne({ email: email, password: password })
         if (!Author) return res.status(404).send({ status: false, msg: "incorrect emailId or password" });
 
+        // will use this later
+        // let author = req.foundDocumentWithCredentials
         // creating token
         let token = JWT.sign(
             {
                 userId: Author._id.toString(),
                 userName: Author.fname + Author.lname,
-                tokenCreationTime: moment().format('MMMM Do YYYY, h:mm:ss a'),
+                tokenCreationTime: moment().format('DD MM YYYY hh:mm:ss a'),
                 type: 'blogging-site-project'
             },
             "-- plutonium-- project-blogging-site -- secret-token --"
