@@ -10,18 +10,20 @@ const ObjectId = require('mongoose').Types.ObjectId
 const checkInputsPresent = (value) => { return (Object.keys(value).length > 0); }
 
 // validating that the input must be a non-empty string
-const checkString = (value) => { return ((typeof (value) === 'string' && value.length > 0)); }
-
+const checkString = (value) => { return ((typeof (value) === 'string' && value.trim().length > 0)); }
 
 // function to validate >  name , email , password 
 const validateName = (name) => { return (/^(?=.{1,50}$)[a-z]+(?:['_.\s][a-z]+)*$/i.test(name)); }
-
 const validateEmail = (email) => { return (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)); }
-
 const validatePassword = (password) => { return (/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(password)); }
 
 // function to check title has specific values or not
-const validateTitle = (title) => { return (title == ("Mr" || "Mrs" || "Miss")); }
+const validateTitle = (title) => {
+    // way-1
+    return ["Mr", "Mrs", "Miss", "Mast"].indexOf(title) !== -1
+    // way-2
+    // return (title == ("Mr" || "Mrs" || "Miss")); 
+}
 
 // function to check an id is in correct _id format .i.e. is it a hex value or not 
 // every ObjectId has a specific format (we saw _id creates automatically and it's unique too )     // _id: creates with a hex value (0-9, a-f)
@@ -38,13 +40,13 @@ const validateAuthor = async (req, res, next) => {
 
     try {
         let authorDetails = req.body
-        // destructuring the object we found from body
-        let { fname, lname, title, email, password, ...rest } = { ...authorDetails }
 
         // checking anything inputted or not
         // as empty object gives truthy value , so we declarin if there is no keys return nothing found
         if (!checkInputsPresent(authorDetails)) return res.status(404).send({ status: false, msg: "nothing found from body" });
 
+        // destructuring the object we found from body
+        let { fname, lname, title, email, password, ...rest } = { ...authorDetails }
         //checking if any other attributes (keys) in req body is present or not (which we don't required to save)
         if (checkInputsPresent(rest)) return res.status(404).send({ status: false, msg: "please provide required details only => fname, lname, title, email & password" });
 
@@ -115,7 +117,7 @@ const validateBlog = async (req, res, next) => {
 //**>>>>>>>>>>>>>>>>>>>>    LOGIN VALIDATION    **///////////////////////
 
 const validateLoginCredentials = async (req, res, next) => {
-    
+
     try {
         let credentials = req.body
         let { email, password, ...rest } = { ...credentials }
@@ -146,4 +148,4 @@ const validateLoginCredentials = async (req, res, next) => {
 }
 
 
-module.exports = { checkInputsPresent, checkString, validateName, validateEmail, validatePassword, validateTitle, validateId }
+module.exports = { checkInputsPresent, checkString, validateName, validateEmail, validatePassword, validateTitle, validateId, validateAuthor, validateBlog, validateLoginCredentials }
