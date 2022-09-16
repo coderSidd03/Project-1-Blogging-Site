@@ -1,15 +1,8 @@
 const BlogModel = require("../models/blogModel");
 const AuthorModel = require('../models/authorModel');
 const Validator = require('../validation/validator')
+const { default: mongoose } = require('mongoose');
 const moment = require("moment");
-
-// declaring the ObjectId types of mongoose 
-const ObjectId = require('mongoose').Types.ObjectId
-
-
-// Defined Some Globally used functions
-const checkInputs = (value) => { return (Object.keys(value).length > 0); }
-const isValidInput = (value) => { return ((typeof (value) === 'string' && value.length > 0)); }
 
 
 //**     /////////////////////////      Createblog      //////////////////////       **//
@@ -19,7 +12,7 @@ const createBlog = async (req, res) => {
         let blogData = req.body
         // using destructuring of object (as we get data as json obj from postman), using ...rest to add all of the rest of the fields (which we need at the time of cretaion new doc)
         // here we defining the key name we are getting from body and then we can call them with this defined name
-        let { title, body, authorId, category, isPublished, tags, subcategory, ...rest } = req.body
+        let { title, body, authorId, category, isPublished, tags, subcategory } = req.body
 
         // //checking that there is data inside body
         // if (!checkInputs(blogData)) return res.status(404).send({ status: false, msg: "please provide details to create a blog" })
@@ -46,7 +39,7 @@ const createBlog = async (req, res) => {
         const data = await BlogModel.create(blogData);
 
         if (isPublished) {
-            data.publishedAt = new Date();
+            data.publishedAt = moment().format('DD MM YYYY hh:mm:ss a');
             data.save();
         }
 
@@ -62,7 +55,7 @@ const getBlogs = async (req, res) => {
 
         // taking all queries from query param and destructuring
         let queries = req.query
-        let { tags, category, subcategory, authorId, ...rest } = {...queries};
+        let { tags, category, subcategory, authorId, ...rest } = { ...queries };
 
         //checking if any other attributes (keys) in req query is present or not (which we don't required)
         if (Validator.checkInputsPresent(rest)) return res.status(404).send({ status: false, msg: "please provide query between valid credentials only => tags, category, subcategory, authorId" });
@@ -80,7 +73,7 @@ const getBlogs = async (req, res) => {
         // if (!allBlogs[0]) return res.status(404).send({ status: false, msg: "No blog found" });
         // way-2
         if (allBlogs.length == 0) return res.status(404).send({ status: false, msg: "No blog found" });
-        
+
 
 
         // sending response
@@ -109,7 +102,7 @@ const updateBlog = async (req, res) => {
         // taking blogId (provided in params) from middleware/authorisation 
         let blogIdFromParams = req.blogIdFromParams;
         // checking the blogId(path params) format is in hex value
-        // if (!ObjectId.isValid(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
+        // if (!Validator.validateId(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
 
         let searchedBlog = req.foundBlog
 
@@ -125,7 +118,7 @@ const updateBlog = async (req, res) => {
         // taking details from the body
         let detailsFromBody = req.body;
         // destructuring 
-        let { title, body, category, isPublished, tags, subcategory, ...rest } = {...detailsFromBody}
+        let { title, body, category, isPublished, tags, subcategory, ...rest } = { ...detailsFromBody }
 
         //checking if any other attributes (keys) in req body is present or not (which we don't required to save)
         if (Validator.checkInputsPresent(rest)) return res.status(400).send({ status: false, msg: "please request with acceptable fields only => title, body, category, isPublished, tags, subcategory to update your document" })
@@ -133,13 +126,12 @@ const updateBlog = async (req, res) => {
         let checkBlog = await BlogModel.findById(blogIdFromParams)
         if (checkBlog['isDeleted'] == true) return res.status(404).send({ status: false, msg: "requested document has already deleted" });
 
-        let currentDate = moment().format("DD MM YYYY hh:mm:ss a")
         // updating that blog with findOneAndUpdate
         const updatedBlog = await BlogModel.findOneAndUpdate(
             { _id: blogIdFromParams },
             {
                 $push: { tags: tags, subcategory: subcategory, category: category },
-                $set: { title: title, body: body, isPublished: true, publishedAt: currentDate }
+                $set: { title: title, body: body, isPublished: true, publishedAt: moment().format('DD MM YYYY hh:mm:ss a') }
             },
             { new: true }
         );
@@ -159,11 +151,13 @@ const deleteBlogById = async (req, res) => {
 
         // authorId who is requesting route (from params)
         let requestingAuthorId = req.requestingAuthor
+
         // getting blog from middleware(authorisation) 
         let isBlogIdPresentDb = req.foundBlog
 
         // validating blogId
         if (!isBlogIdPresentDb) return res.status(404).send({ status: false, msg: "Blog is not exist" });
+        
         // authorId found from blog
         let authorIdFromReqBlog = isBlogIdPresentDb['authorId']
 
@@ -176,7 +170,7 @@ const deleteBlogById = async (req, res) => {
         // deleting that perticular doc
         let deleteBlog = await BlogModel.updateOne(
             { _id: blogIdFromParams },
-            { isDeleted: true, deletedAt: new Date() },
+            { isDeleted: true, deletedAt: moment().format('MMMM Do YYYY, h:mm:ss a') },
             { new: true }
         );
         res.status(200).send({ status: true, msg: "document deleted successfully" });
@@ -224,7 +218,7 @@ const deleteBlogByQueryParam = async (req, res) => {
         let deletedBlogDetails = await BlogModel.updateMany(
             // using $and to target those docs matching with queries taken and those are not deleted
             { $and: [queries, { isDeleted: false }] },
-            { $set: { isDeleted: true, deletedAt: new Date() } },
+            { $set: { isDeleted: true, deletedAt: moment().format('DD MM YYYY hh:mm:ss a') } },
             { new: true }
         );
         res.status(200).send({ status: true, msg: "matched document deleted successfully" });

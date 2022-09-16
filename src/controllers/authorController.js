@@ -4,18 +4,12 @@ const AuthorModel = require("../models/authorModel")
 // const = require("../controllers/)
 
 
-// Defined Some Globally used functions
-
-const checkInputs = (value) => { return (Object.keys(value).length > 0); }
-
-const isValidInput = (value) => { return ((typeof (value) === 'string' && value.length > 0)); }
-
 
 //**     /////////////////////////      CreateAuthor      //////////////////////       **//
 
 const createAuthor = async (req, res) => {
     try {
-        // // checking anything inputted or not
+        // checking anything inputted or not
         // // as empty object gives truthy value , so we declarin if there is no keys return nothing found
         // if (!checkInputs(author)) return res.status(404).send({ status: false, msg: "nothing found from body" });
 
@@ -96,7 +90,7 @@ const login = async (req, res) => {
         // sending the token in response header
         res.setHeader("x-api-key", token);
 
-        return res.status(201).send({ status: true, data: token })
+        return res.status(201).send({ status: true, msg: "token generation successfull", data: token })
     } catch (err) {
         res.status(500).send({ status: "error", error: err.message });
     }

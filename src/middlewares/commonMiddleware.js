@@ -3,7 +3,7 @@ const AuthorModel = require('../models/authorModel')
 const BlogModel = require('../models/blogModel')
 const Validator = require('../validation/validator')
 
-const ObjectId = require('mongoose').Types.ObjectId
+// const ObjectId = require('mongoose').Types.ObjectId
 
 
 //**     /////////////////////////      Authentication      //////////////////////       **//
@@ -48,7 +48,7 @@ const authoriseAuthor = async (req, res, next) => {
 
         // taking blogId from params and checking that it's present
         let blogIdFromParams = req.params.blogId
-        // if (!ObjectId.isValid(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
+        if (!Validator.validateId(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
 
         // finding the blog with blogId inside BlogModel
         let validateBlogId = await BlogModel.findById(blogIdFromParams)

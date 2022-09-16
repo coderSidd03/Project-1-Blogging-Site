@@ -1,8 +1,8 @@
 const { default: mongoose } = require("mongoose");
-const authorModel = require("../models/authorModel");
+const AuthorModel = require("../models/authorModel");
 
 // declaring the ObjectId types of mongoose 
-const ObjectId = require('mongoose').Types.ObjectId
+// const ObjectId = require('mongoose').Types.ObjectId
 
 //**    Function for validation    **/
 
@@ -20,7 +20,7 @@ const validatePassword = (password) => { return (/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*
 // function to check title has specific values or not
 const validateTitle = (title) => {
     // way-1
-    return ["Mr", "Mrs", "Miss", "Mast"].indexOf(title) !== -1
+    return ["Mr", "Mrs", "Miss"].indexOf(title) !== -1
     // way-2
     // return (title == ("Mr" || "Mrs" || "Miss")); 
 }
@@ -47,6 +47,7 @@ const validateAuthor = async (req, res, next) => {
 
         // destructuring the object we found from body
         let { fname, lname, title, email, password, ...rest } = { ...authorDetails }
+
         //checking if any other attributes (keys) in req body is present or not (which we don't required to save)
         if (checkInputsPresent(rest)) return res.status(404).send({ status: false, msg: "please provide required details only => fname, lname, title, email & password" });
 
@@ -64,8 +65,9 @@ const validateAuthor = async (req, res, next) => {
         if (!validateTitle(title)) return res.status(400).send({ status: false, msg: "put title between ['Mr'/ 'Mrs'/ 'Miss'] " });
 
         if (!validateEmail(email)) return res.status(400).send({ status: false, msg: "Email format invalid, Please check your Email address" });
+        
         // checking that inputted email is not present in any of documents inside authormodel
-        let checkEmailPresent = await authorModel.findOne({ email: email })
+        let checkEmailPresent = await AuthorModel.findOne({ email: email })
         if (checkEmailPresent) return res.status(400).send({ status: false, msg: "Email already registered, use different emailId" });
 
         if (!validatePassword(password)) return res.status(400).send({ status: false, msg: "use a strong password with at least => 1 lowercase alphabetical character => 1 uppercase alphabetical character => 1 numeric character => one special character and password must be eight characters or longer" });
@@ -97,17 +99,18 @@ const validateBlog = async (req, res, next) => {
         if (!checkString(title)) return res.status(400).send({ status: false, msg: "Title is required [ in string ] " });
         if (!checkString(body)) return res.status(400).send({ status: false, msg: "Body is required [ in string ] " });
         if (!checkString(authorId)) return res.status(400).send({ status: false, msg: "AuthorId is required [ in string ] " });
-        if (!category) return res.status(400).send({ status: false, msg: "Category is required [ in array of strings ] " });
+        if (!Array.isArray(category)) return res.status(400).send({ status: false, msg: "Category is required [ in array of strings ] " });
 
         // checking that the authorId which is given is that in a perfect _id format .i.e. is it a hex value or not 
         // every ObjectId has a specific format (we saw _id creates automatically and it's unique too )     // _id: creates with a hex value (0-9, a-f)
         if (!validateId(authorId)) return res.status(400).send({ status: false, msg: "AuthorId is invalid" });
 
         //finding by authorId
-        const validateAuthorId = await AuthorModel.findById(authorId);
+        // const validateAuthorId = await AuthorModel.findById(authorId);
         //check valid authorId
-        if (!validateAuthorId) return res.status(400).send({ status: false, msg: "Author is not present, create author first" });
+        // if (!validateAuthorId) return res.status(400).send({ status: false, msg: "Author is not present, create author first" });
 
+        // req.validateAuthorId = validateAuthorId
         next()
     } catch (err) {
         res.status(500).send({ status: "error", error: err.message });
@@ -124,13 +127,13 @@ const validateLoginCredentials = async (req, res, next) => {
         // as empty object gives truthy value , so we declarin if there is no keys return nothing found
         if (!checkInputsPresent(credentials)) return res.status(404).send({ status: false, msg: "nothing found from body", required: "email: abc@xyzmail.com , password: abcX@1" });
 
-        //checking if any other attributes (keys) in req body is present or not (which we don't required)
-        if (checkInputsPresent(rest)) return res.status(404).send({ status: false, msg: "please enter email & password only" });
-
         // taking EmailId and Password from body and checking both are present
         // as well as in string
         if (!checkString(email)) return res.status(404).send({ status: false, msg: "please enter EmailId [ in string ] " })
         if (!checkString(password)) return res.status(404).send({ status: false, msg: "please enter Password [ in string ] " })
+
+        //checking if any other attributes (keys) in req body is present or not (which we don't required)
+        if (checkInputsPresent(rest)) return res.status(404).send({ status: false, msg: "please enter email & password only" });
 
         // checking that given email is in correct format
         if (!validateEmail(email)) return res.status(400).send({ status: false, msg: "Please provide an email with valid format " });

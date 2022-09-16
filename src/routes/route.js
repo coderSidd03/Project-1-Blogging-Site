@@ -9,9 +9,7 @@ const BlogController = require("../controllers/blogController");
 const Validator = require("../validation/validator")
 
 
-
 //**    APIS   **//
-
 // Author apis
 router.post("/login", Validator.validateLoginCredentials, AuthorController.login);
 router.post("/authors", Validator.validateAuthor, AuthorController.createAuthor);
@@ -19,7 +17,7 @@ router.post("/authors", Validator.validateAuthor, AuthorController.createAuthor)
 // blogs apis
 router.post("/blogs", Validator.validateBlog, MW.authenticateAuthor, BlogController.createBlog);
 router.get("/getBlogs", MW.authenticateAuthor, BlogController.getBlogs);
-router.put('/blogs/:authorId/:blogId', MW.authenticateAuthor, MW.authoriseAuthor, BlogController.updateBlog);
+router.put('/blogs/:authorId/:blogId', Validator.validateBlog, MW.authenticateAuthor, MW.authoriseAuthor, BlogController.updateBlog);
 
 // delete apis
 router.delete('/blogs/:authorId/:blogId', MW.authenticateAuthor, MW.authoriseAuthor, BlogController.deleteBlogById);

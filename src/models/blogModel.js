@@ -33,7 +33,7 @@ const blogSchema = new mongoose.Schema({
     subcategory: [{ type: String, trim: true }],
 
     deletedAt: {
-        type: Date,
+        type: String,
         default: null
     },
 
@@ -43,7 +43,7 @@ const blogSchema = new mongoose.Schema({
     },
 
     publishedAt: {
-        type: Date,
+        type: String,
         default: null
     },
 
