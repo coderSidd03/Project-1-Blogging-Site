@@ -20,7 +20,7 @@ const authenticateAuthor = async (req, res, next) => {
         let decodedToken = JWT.verify(token, "-- plutonium-- project-blogging-site -- secret-token --")    // hv to chk callback to find evry part of token's error
 
         // checking if not decodedToken .i.e. given token is not a valid token
-        if (!decodedToken) return res.status(404).send({ status: false, msg: "invalid token" })
+        if (!decodedToken) return res.status(400).send({ status: false, msg: "invalid token" })
 
         // setting decodedToken in the response headers and passing the value of this function's data stored in decodedToken
         req.decodedToken = decodedToken
@@ -37,31 +37,25 @@ const authoriseAuthor = async (req, res, next) => {
     try {
 
         // extracting the userId from the decodedToken's sent data( req.decodedToken.AuthorId )
-        let loggedInAuthor = req.decodedToken.userId
+        let loggedInAuthorId = req.decodedToken.userId
 
         // taking the author from path params (who is requesting route)
-        let requestingAuthor = req.params.authorId
-        if (!Validator.validateId(requestingAuthor)) return res.status(404).send({ status: false, msg: 'invalid authorId provided in path params' })
+        let requestingAuthorId = req.params.authorId
+        if (!Validator.validateId(requestingAuthorId)) return res.status(404).send({ status: false, msg: 'invalid authorId provided in path params' })
 
         // checking with two id's that author who is requesting route and whose data in token are the same
-        if (loggedInAuthor != requestingAuthor) return res.status(404).send({ status: false, msg: 'user is not authorised' })
+        if (loggedInAuthorId != requestingAuthorId) return res.status(401).send({ status: false, msg: 'user is not authorised' })
+        
+        let blogIdFromParams = req.params.blogId;                  // taking blogId from params and checking that it's present
 
-        // taking blogId from params and checking that it's present
-        let blogIdFromParams = req.params.blogId
-        // if (!Validator.validateId(blogIdFromParams)) return res.status(404).send({ status: false, msg: 'invalid blogId provided in path params' })
-
-        // finding the blog with blogId inside BlogModel
-        let validateBlogId = await BlogModel.findById(blogIdFromParams)
+        let foundBlog = await BlogModel.findById(blogIdFromParams)          // finding the blog with blogId inside BlogModel
 
         // sending values
-        // userId found from token
-        req.loggedInAuthor = loggedInAuthor
-        // userId from params
-        req.requestingAuthor = requestingAuthor
-        // the blog found
-        req.foundBlog = validateBlogId
-        // id of the blog
-        req.blogIdFromParams = blogIdFromParams
+        
+        req.loggedInAuthorId = loggedInAuthorId         // userId found from token
+        req.requestingAuthorId = requestingAuthorId     // userId from params
+        req.foundBlog = foundBlog                       // the blog found
+        req.blogIdFromParams = blogIdFromParams         // blog id from params
 
         next()
 

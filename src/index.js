@@ -1,11 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
+const PORT = process.env.PORT || 3000;
 const route = require('./routes/route.js');
 const { default: mongoose } = require('mongoose');
-
 const app = express();
 
+
 app.use(bodyParser.json());
+app.use(cors());
 
 mongoose.connect("mongodb+srv://Project-1:6H3EsS0qOKLtWR0B@cluster0.hln3nud.mongodb.net/Project-1?retryWrites=true&w=majority",
     {
@@ -27,6 +30,6 @@ app.use('/', route);
 // });
 
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log('Express app listening on port ' + (process.env.PORT || 3000))
+app.listen(PORT, () => {
+    console.log(`Express app listening on port: ${PORT}...`);
 });
