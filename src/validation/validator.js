@@ -1,4 +1,5 @@
 const { default: mongoose } = require("mongoose");
+// const ObjectId = require('mongoose').Types.ObjectId
 
 //**    Function for validation    **/
 
@@ -30,7 +31,7 @@ const validateTitle = (title) => {
 const validateId = (id) => {
     // way:1
     return mongoose.isValidObjectId(id);
-    // way:2 // to do this have to use ln:5
+    // way:2 // to do this have to use ln:2
     // return ObjectId.isValid(id)
 }
 

@@ -54,7 +54,7 @@ const getBlogs = async (req, res) => {
 
         // taking all queries from query param and destructuring
         let queries = req.query
-        let { tags, category, subcategory, authorId, ...rest } = { ...queries };
+        let { tags, category, subcategory, authorId, ...rest } = queries;
 
         //checking if any other attributes (keys) in req query is present or not (which we don't required)
         if (Validator.checkInputsPresent(rest)) return res.status(400).send({ status: false, msg: "please provide query between valid credentials only => tags, category, subcategory, authorId" });
@@ -93,31 +93,27 @@ const updateBlog = async (req, res) => {
 
     try {
 
-        // taking the userId who is requesting this route
-        let requestingAuthorId = req.requestingAuthorId
-        // taking the blog from authorise middleware
+        
+        let requestingAuthorId = req.requestingAuthorId                                                 // taking the userId who is requesting this route
+        
+        let blogIdFromParams = req.blogIdFromParams;                                                    // taking blogId (provided in params) from middleware/authorisation    
 
-        // taking blogId (provided in params) from middleware/authorisation 
-        let blogIdFromParams = req.blogIdFromParams;
         // checking the blogId(path params) format is in hex value
         if (!Validator.validateId(blogIdFromParams)) return res.status(400).send({ status: false, msg: 'invalid blogId provided in path params' })
 
-        // taking the blog found from the authorisation
-        let searchedBlog = req.foundBlog
+        let searchedBlog = req.foundBlog                                                                // taking the blog found from the authorisation
 
-        // getting blog from middleware(authorisation) in searchedBlog variable
-        if (!searchedBlog) return res.status(404).send({ status: false, msg: "invalid blogId" });
+        
+        if (!searchedBlog) return res.status(404).send({ status: false, msg: "invalid blogId" });       // getting blog from middleware(authorisation) in searchedBlog variable
 
-        // extracting authorId from blog
-        let authorIdFromBlog = searchedBlog['authorId'].toString();
+        let authorIdFromBlog = searchedBlog['authorId'].toString();                                     // extracting authorId from blog
 
         // checking that both author are same
         if (requestingAuthorId != authorIdFromBlog) return res.status(404).send({ status: false, msg: "author has no permission to change other's blog" });
 
-        // taking details from the body
-        let detailsFromBody = req.body;
-        // destructuring 
-        let { title, body, category, isPublished, tags, subcategory, ...rest } = detailsFromBody;
+        
+        let detailsFromBody = req.body;                                                                 // taking details from the body
+        let { title, body, category, isPublished, tags, subcategory, ...rest } = detailsFromBody;       // destructuring
 
         //checking if any other attributes (keys) in req body is present or not (which we don't required to save)
         if (Validator.checkInputsPresent(rest)) return res.status(400).send({ status: false, msg: "please request with acceptable fields only => title, body, category, isPublished, tags, subcategory to update your document" })
@@ -134,6 +130,7 @@ const updateBlog = async (req, res) => {
             },
             { new: true }
         );
+
         res.status(200).send({ status: true, data: updatedBlog });
     } catch (err) {
         res.status(500).send({ status: "error", error: err.message });
@@ -143,15 +140,15 @@ const updateBlog = async (req, res) => {
 //**     /////////////////////////      deleteBlog by ID     //////////////////////  /blogs/:blogId      **//
 const deleteBlogById = async (req, res) => {
     try {
-        let requestingAuthorId = req.requestingAuthorId         // authorId who is requesting route (from params)
-        let blogIdFromParams = req.blogIdFromParams;            // blogId from params
+        let requestingAuthorId = req.requestingAuthorId                             // authorId who is requesting route (from params)
+        let blogIdFromParams = req.blogIdFromParams;                                // blogId from params
 
 
-        //let isBlogIdPresentDb = await BlogModel.findById(blogId);       // checking blog is present or not
-        let checkBlog = await BlogModel.findById(blogIdFromParams);
+        
+        let checkBlog = await BlogModel.findById(blogIdFromParams);                 // checking blog is present or not
         if (!checkBlog) return res.status(404).send({ status: false, msg: "Blog is not exist" }); 
 
-        let authorIdFromReqBlog = checkBlog['authorId']                   // authorId found from blog        
+        let authorIdFromReqBlog = checkBlog['authorId']                             // authorId found from blog        
 
         // checking that the author who requesting route is trying to delete his own blog 
         if (requestingAuthorId != authorIdFromReqBlog) return res.status(400).send({ status: false, msg: "author has no permission to delete other's blog" });
@@ -165,6 +162,7 @@ const deleteBlogById = async (req, res) => {
             { isDeleted: true, deletedAt: moment().format('DD/MM/YYYY  hh:mm:ss a') },
             { new: true }
         );
+
         res.status(200).send({ status: true, msg: "document deleted successfully" });
     } catch (err) {
         res.status(500).send({ status: "error", error: err.message });
@@ -174,8 +172,8 @@ const deleteBlogById = async (req, res) => {
 //**     /////////////////////////      deleteBlog  by query    //////////////////////  /blogs?queryParams      **//
 const deleteBlogByQueryParam = async (req, res) => {
     try {
-        // taking the userId who is requesting this route
-        let requestingAuthorId = req.requestingAuthorId
+        
+        let requestingAuthorId = req.requestingAuthorId                     // taking the userId who is requesting this route
 
         // taking queries
         let queries = req.query;
@@ -195,14 +193,15 @@ const deleteBlogByQueryParam = async (req, res) => {
         if (filterByQuery.length == 0) return res.status(404).send({ status: false, msg: "No blog found to delete" });
 
         // deleting documents according to the query param inputs
-        // according to those data there will may be a scenario where we have to update many docs
-        // thats'why we are using updateMany
+        // according to those data there will may be a scenario where we may have to update many docs       // thats'why we are using updateMany
+        
         let deletedBlogDetails = await BlogModel.updateMany(
             // using $and to target those docs matching with queries taken and those are not deleted
             { $and: [queries, { isDeleted: false }] },
             { $set: { isDeleted: true, deletedAt: moment().format('DD/MM/YYYY hh:mm:ss a') } },
             { new: true }
         );
+
         res.status(200).send({ status: true, msg: "matched document deleted successfully" });
     } catch (err) {
         res.status(500).send({ status: "error", error: err.message });

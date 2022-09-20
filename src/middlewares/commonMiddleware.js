@@ -3,7 +3,6 @@ const AuthorModel = require('../models/authorModel')
 const BlogModel = require('../models/blogModel')
 const Validator = require('../validation/validator')
 
-// const ObjectId = require('mongoose').Types.ObjectId
 
 
 //**     /////////////////////////      Authentication      //////////////////////       **//
@@ -46,7 +45,7 @@ const authoriseAuthor = async (req, res, next) => {
         // checking with two id's that author who is requesting route and whose data in token are the same
         if (loggedInAuthorId != requestingAuthorId) return res.status(401).send({ status: false, msg: 'user is not authorised' })
         
-        let blogIdFromParams = req.params.blogId;                  // taking blogId from params and checking that it's present
+        let blogIdFromParams = req.params.blogId;                           // taking blogId from params and checking that it's present
 
         let foundBlog = await BlogModel.findById(blogIdFromParams)          // finding the blog with blogId inside BlogModel
 
