@@ -17,7 +17,7 @@ const createAuthor = async (req, res) => {
         if (!Validator.checkInputsPresent(authorDetails)) return res.status(400).send({ status: false, msg: "nothing found from body" });
 
         // destructuring the object we found from body
-        let { fname, lname, title, email, password, ...rest } = { ...authorDetails }
+        let { fname, lname, title, email, password, ...rest } = authorDetails;
 
         //checking if any other attributes (keys) in req body is present or not (which we don't required to save)
         if (Validator.checkInputsPresent(rest)) return res.status(400).send({ status: false, msg: "please provide required details only => fname, lname, title, email & password" });
@@ -40,7 +40,7 @@ const createAuthor = async (req, res) => {
 
         
         // checking that inputted email is not present in any of documents inside authormodel
-        let checkEmailPresent = await AuthorModel.findOne({ email: email })
+        let checkEmailPresent = await AuthorModel.findOne({ email: email });
         if (checkEmailPresent) return res.status(409).send({ status: false, msg: "Email already registered, use different emailId" });
 
         // creating new author
@@ -58,8 +58,8 @@ const login = async (req, res) => {
 
     try {
 
-        let credentials = req.body
-        let { email, password, ...rest } = credentials
+        let credentials = req.body;
+        let { email, password, ...rest } = credentials;
 
         // as empty object gives truthy value , so we declarin if there is no keys return nothing found
         if (!Validator.checkInputsPresent(credentials)) return res.status(404).send({ status: false, msg: "nothing found from body", required: "email: abc@xyzmail.com , password: abcX@1" });
@@ -68,14 +68,14 @@ const login = async (req, res) => {
         if (!Validator.checkString(email)) return res.status(404).send({ status: false, msg: "please enter EmailId [ in string ] " })
         if (!Validator.validateEmail(email)) return res.status(400).send({ status: false, msg: "invalid Email, Please check your Email address" });             // checking that given email is in correct format
 
-        if (!Validator.checkString(password)) return res.status(404).send({ status: false, msg: "please enter Password [ in string ] " })
+        if (!Validator.checkString(password)) return res.status(404).send({ status: false, msg: "please enter Password [ in string ] " });
 
         //checking if any other attributes (keys) in req body is present or not (which we don't required)
         if (Validator.checkInputsPresent(rest)) return res.status(404).send({ status: false, msg: "please enter email & password only" });
 
 
         // finding that particular user/author inside AuthorModel  
-        let author = await AuthorModel.findOne({ email: email, password: password })
+        let author = await AuthorModel.findOne({ email: email, password: password });
         if (!author) return res.status(404).send({ status: false, result: "no data found", msg: "incorrect emailId or password, please resubmit" });
 
         // will use this later
@@ -93,7 +93,7 @@ const login = async (req, res) => {
         // sending the token in response header
         res.setHeader("x-api-key", token);
 
-        return res.status(201).send({ status: true, msg: "token generation successfull", data: token })
+        return res.status(201).send({ status: true, msg: "token generation successfull", data: token });
     } catch (err) {
         res.status(500).send({ status: "error", error: err.message });
     }

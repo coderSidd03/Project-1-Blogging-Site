@@ -1,14 +1,12 @@
 const { default: mongoose } = require("mongoose");
 // const ObjectId = require('mongoose').Types.ObjectId
 
+
 //**    Function for validation    **/
 
-// checking that there is something as input
-const checkInputsPresent = (value) => { return (Object.keys(value).length > 0); }
+const checkInputsPresent = (value) => { return (Object.keys(value).length > 0); }                               // checking that there is something as input
 
-
-// validating that the input must be a non-empty string
-const checkString = (value) => { return ((typeof (value) === 'string' && value.trim().length > 0)); }
+const checkString = (value) => { return ((typeof (value) === 'string' && value.trim().length > 0)); }           // validating that the input must be a non-empty string
 
 
 // function to validate >  name , email , password 
